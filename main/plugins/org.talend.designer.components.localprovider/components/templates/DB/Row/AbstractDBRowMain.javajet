@@ -168,7 +168,6 @@ try {
 	}
 %>
 	} catch (java.lang.Exception e) {
-		whetherReject_<%=cid%> = true;
 		<%
 		if (("true").equals(dieOnError)) {
 			%>
@@ -200,38 +199,50 @@ try {
 			}
 		}
 		%>
+		
+        <%		
+	    if (usePrepareStatement) {
+        %>
+	        pstmt_<%=cid %>.close();	
+        <%
+        } else {
+        %>
+        stmt_<%=cid %>.close();	
+		<%
+		}
+		%>
+		conn_<%=cid %>.close();	
+		
 	}
 	<%
 if(outgoingConns != null && outgoingConns.size() > 0) {
 	%>
-	if(!whetherReject_<%=cid%>) {
-		<%
-		for(IConnection outgoingConn : outgoingConns) {
-			if(rejectConnName == null || (rejectConnName != null && !outgoingConn.getName().equals(rejectConnName))) {
-				if(outgoingConn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
-					%>
-					<%=outgoingConn.getName()%> = new <%=outgoingConn.getName()%>Struct();
-					<%
-					for(IMetadataColumn column : columnList) {
-						if(("true").equals(propagateRecordset) && column.getLabel().equals(recordsetColumn)){
-							%>
-							<%=outgoingConn.getName()%>.<%=column.getLabel()%> = rs_<%=cid %>;
-							<%
-						} else {
-							if(incomingConnName!=null){
-								if (inputCols.contains(column.getLabel())) {
-							%>
-							<%=outgoingConn.getName()%>.<%=column.getLabel()%> = <%=incomingConnName%>.<%=column.getLabel()%>;
-							<%
-								}
+	<%
+	for(IConnection outgoingConn : outgoingConns) {
+		if(rejectConnName == null || (rejectConnName != null && !outgoingConn.getName().equals(rejectConnName))) {
+			if(outgoingConn.getLineStyle().hasConnectionCategory(IConnectionCategory.DATA)) {
+				%>
+				<%=outgoingConn.getName()%> = new <%=outgoingConn.getName()%>Struct();
+				<%
+				for(IMetadataColumn column : columnList) {
+					if(("true").equals(propagateRecordset) && column.getLabel().equals(recordsetColumn)){
+						%>
+						<%=outgoingConn.getName()%>.<%=column.getLabel()%> = rs_<%=cid %>;
+						<%
+					} else {
+						if(incomingConnName!=null){
+							if (inputCols.contains(column.getLabel())) {
+						%>
+						<%=outgoingConn.getName()%>.<%=column.getLabel()%> = <%=incomingConnName%>.<%=column.getLabel()%>;
+						<%
 							}
 						}
 					}
 				}
 			}
 		}
-		%>
 	}
+	%>
 	<%
 }
 if(!("true").equals(useExistingConn) && useTransaction) {
